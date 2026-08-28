@@ -8,6 +8,8 @@
 // Pure parsing of GitHub release metadata. No networking or SD access.
 namespace releaseparser {
 
+    bool splitOwnerRepo(std::string_view value, std::string& owner, std::string& repo);
+
     std::expected<std::string, std::error_code> tagFromAssetLocation(std::string_view location,
                                                                     std::string_view assetName);
 
