@@ -25,6 +25,7 @@ void test_defaults_round_trip_through_toml_and_companion_json() {
     TEST_ASSERT_EQUAL(std::string::npos, toml->find("schemaVersion"));
     TEST_ASSERT_NOT_EQUAL(std::string::npos, toml->find("batteryIconVisible = true"));
     TEST_ASSERT_NOT_EQUAL(std::string::npos, toml->find("checkOnStartup = false"));
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, toml->find("rotate180 = false"));
     auto fromToml = settings::codec::decodeToml(*toml, settings::SettingsSource::Sd);
     TEST_ASSERT_TRUE_MESSAGE(fromToml.has_value(), fromToml ? "" : fromToml.error().message.c_str());
     TEST_ASSERT_TRUE(defaults == *fromToml);
@@ -45,11 +46,13 @@ void test_enum_names_are_human_readable() {
     value.reading.mode = settings::ReadingMode::page;
     value.reading.pauseMode = settings::PauseMode::instant;
     value.interface.screensaver = standby::Kind::reaction;
+    value.interface.rotate180 = true;
     auto toml = settings::codec::encodeToml(value, settings::SettingsSource::Programmatic);
     TEST_ASSERT_TRUE(toml.has_value());
     TEST_ASSERT_NOT_EQUAL(std::string::npos, toml->find("mode = \"page\""));
     TEST_ASSERT_NOT_EQUAL(std::string::npos, toml->find("pauseMode = \"instant\""));
     TEST_ASSERT_NOT_EQUAL(std::string::npos, toml->find("screensaver = \"reaction\""));
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, toml->find("rotate180 = true"));
 }
 
 void test_missing_fields_retain_defaults() {

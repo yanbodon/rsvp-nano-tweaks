@@ -268,6 +268,32 @@ namespace EpubPackage {
                });
     }
 
+    bool hasUnsupportedEncryption(std::string_view encryptionXml) {
+        static constexpr std::array<std::string_view, 2> kFontObfuscationAlgorithms = {{
+            "http://www.idpf.org/2008/embedding",
+            "http://ns.adobe.com/pdf/enc#RC",
+        }};
+
+        size_t position = 0;
+        size_t methodCount = 0;
+        while ((position = encryptionXml.find("EncryptionMethod", position)) != std::string_view::npos) {
+            const size_t tagStart = encryptionXml.rfind('<', position);
+            const size_t tagEnd = encryptionXml.find('>', position);
+            if (tagStart == std::string_view::npos || tagEnd == std::string_view::npos) {
+                return true;
+            }
+            const std::string algorithm = attributeValue(
+                encryptionXml.substr(tagStart, tagEnd - tagStart + 1), "Algorithm");
+            if (algorithm.empty()
+                || std::ranges::find(kFontObfuscationAlgorithms, algorithm) == kFontObfuscationAlgorithms.end()) {
+                return true;
+            }
+            ++methodCount;
+            position = tagEnd + 1;
+        }
+        return methodCount == 0;
+    }
+
     std::string parseRootfilePath(std::string_view containerXml) {
         size_t position = 0;
         while (position < containerXml.size()) {

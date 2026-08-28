@@ -231,6 +231,7 @@ data class NanoSettings(
         val standbyTimerIndex: Int = NanoSettingsSchema.STANDBY_TIMER_1_MIN,
         val screensaver: String = NanoSettingsSchema.SCREENSAVER_LIFE,
         val selectedThemeId: String = NanoSettingsSchema.THEME_DEFAULT,
+        val rotate180: Boolean = false,
     )
 
     @Serializable
@@ -272,6 +273,9 @@ data class NanoSettings(
 
     fun withBrightnessPercent(value: Int): NanoSettings =
         copy(`interface` = `interface`.copy(brightnessPercent = NanoSettingsSchema.coerceBrightnessPercent(value)))
+
+    fun withScreenRotation180(value: Boolean): NanoSettings =
+        copy(`interface` = `interface`.copy(rotate180 = value))
 
     fun withThemeId(value: String): NanoSettings {
         return copy(`interface` = `interface`.copy(selectedThemeId = value.ifBlank { NanoSettingsSchema.THEME_DEFAULT }))

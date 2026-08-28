@@ -25,6 +25,7 @@ namespace EpubPackage {
     bool isArchiveHintEntry(std::string_view name);
     std::string directoryForPath(std::string_view path);
     bool isContentDocument(const ManifestItem& item);
+    bool hasUnsupportedEncryption(std::string_view encryptionXml);
     std::string parseRootfilePath(std::string_view containerXml);
     std::string parseDcMetadata(std::string_view opfXml, std::string_view tagName);
     std::string parsePackageVersion(std::string_view opfXml);

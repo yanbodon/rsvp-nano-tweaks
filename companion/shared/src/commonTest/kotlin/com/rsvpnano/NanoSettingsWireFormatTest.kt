@@ -62,7 +62,7 @@ class NanoSettingsWireFormatTest {
             document.getValue("updates").jsonObject.keys,
         )
         assertEquals(
-            setOf("brightnessPercent", "locale", "standbyTimerIndex", "screensaver", "selectedThemeId"),
+            setOf("brightnessPercent", "locale", "standbyTimerIndex", "screensaver", "selectedThemeId", "rotate180"),
             document.getValue("interface").jsonObject.keys,
         )
         assertFalse("automatic" in document.getValue("updates").jsonObject)
@@ -92,6 +92,7 @@ class NanoSettingsWireFormatTest {
         assertEquals(NanoSettingsSchema.READING_MODE_RSVP, settings.reading.mode)
         assertEquals(NanoSettingsSchema.STANDBY_TIMER_1_MIN, settings.`interface`.standbyTimerIndex)
         assertEquals(NanoSettingsSchema.TYPEFACE_DEFAULT, settings.reading.typography.fontId)
+        assertFalse(settings.`interface`.rotate180)
         assertFalse(settings.updates.checkOnStartup)
     }
 

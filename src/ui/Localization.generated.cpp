@@ -9,7 +9,7 @@
 namespace {
 
     constexpr size_t kTextCount = static_cast<size_t>(UiText::Count);
-    static_assert(kTextCount == 166, "UiText count mismatch");
+    static_assert(kTextCount == 167, "UiText count mismatch");
 
     using TextRow = std::array<std::string_view, kTextCount>;
 
@@ -25,6 +25,7 @@ namespace {
         /* WordPacing               */ "Word pacing",
         /* Theme                    */ "Theme",
         /* Brightness               */ "Brightness",
+        /* Rotate180                */ "Rotate 180\u00B0",
         /* Language                 */ "Language",
         /* ReadingMode              */ "Reading mode",
         /* LongWords                */ "Long words",

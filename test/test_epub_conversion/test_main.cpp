@@ -8,6 +8,7 @@
 #include "conversion/epub/EpubContentParser.h"
 #include "conversion/epub/EpubPackage.h"
 #include "conversion/rsvp/RsvpWriter.h"
+#include "storage/fs/StoragePaths.h"
 
 void setUp() {}
 void tearDown() {}
@@ -55,6 +56,26 @@ namespace {
         TEST_ASSERT_EQUAL_UINT32(2, manifest.size());
         TEST_ASSERT_EQUAL_STRING("nav", manifest[0].properties.c_str());
         TEST_ASSERT_EQUAL_STRING("OEBPS/Text/Chapter One.xhtml", manifest[1].path.c_str());
+    }
+
+    void test_font_obfuscation_is_not_treated_as_encrypted_content() {
+        constexpr std::string_view fontObfuscation = R"(<encryption><EncryptedData>
+            <EncryptionMethod Algorithm="http://www.idpf.org/2008/embedding"/>
+            </EncryptedData></encryption>)";
+        constexpr std::string_view contentEncryption = R"(<encryption><EncryptedData>
+            <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc"/>
+            </EncryptedData></encryption>)";
+
+        TEST_ASSERT_FALSE(EpubPackage::hasUnsupportedEncryption(fontObfuscation));
+        TEST_ASSERT_TRUE(EpubPackage::hasUnsupportedEncryption(contentEncryption));
+        TEST_ASSERT_TRUE(EpubPackage::hasUnsupportedEncryption("<encryption/>"));
+    }
+
+    void test_filename_sanitizer_preserves_polish_utf8() {
+        TEST_ASSERT_EQUAL_STRING("Męczennik- - Kaveh Akbar.epub",
+                                 StoragePaths::sanitizeFilename("Męczennik! - Kaveh Akbar.epub").c_str());
+        TEST_ASSERT_EQUAL_STRING("Zażółć gęślą jaźń.rsvp",
+                                 StoragePaths::sanitizeFilename("Zażółć gęślą jaźń.rsvp").c_str());
     }
 
     void test_nav_toc_flattens_nested_entries_and_decodes_fragments() {
@@ -162,6 +183,8 @@ int main(int, char**) {
     UNITY_BEGIN();
     RUN_TEST(test_rsvp_writer_is_deterministic_and_idempotent);
     RUN_TEST(test_package_parses_nav_metadata_and_encoded_manifest_paths);
+    RUN_TEST(test_font_obfuscation_is_not_treated_as_encrypted_content);
+    RUN_TEST(test_filename_sanitizer_preserves_polish_utf8);
     RUN_TEST(test_nav_toc_flattens_nested_entries_and_decodes_fragments);
     RUN_TEST(test_ncx_toc_ignores_non_content_labels);
     RUN_TEST(test_parser_uses_ordered_toc_labels_and_paragraph_markers);

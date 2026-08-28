@@ -17,6 +17,7 @@ enum class UiText : uint8_t {
     WordPacing,
     Theme,
     Brightness,
+    Rotate180,
     Language,
     ReadingMode,
     LongWords,

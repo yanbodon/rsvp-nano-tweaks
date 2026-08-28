@@ -56,6 +56,9 @@ api::Result<> CompanionApi::patchDisplaySettings(httpd_req_t& request) {
             settingsStore_.settings().interface = std::move(interface);
             settingsStore_.acceptChanges();
             Board::Display::setBrightness(settingsStore_.settings().interface.brightnessPercent);
+            ui_.setOrientation(settingsStore_.settings().interface.rotate180
+                                 ? Board::Display::rotatedUiOrientation()
+                                 : Board::Display::defaultUiOrientation());
         });
 }
 

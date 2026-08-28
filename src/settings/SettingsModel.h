@@ -114,6 +114,7 @@ namespace settings {
         BoundedValue<uint8_t, 0, 4> standbyTimerIndex{1};
         standby::Kind screensaver = standby::Kind::life;
         std::string selectedThemeId = "default";
+        bool rotate180 = false;
 
         bool operator==(const InterfaceSettings&) const = default;
     };

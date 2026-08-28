@@ -1,5 +1,6 @@
 #include "ui/screens/ScreenCommon.h"
 
+#include "board/BoardDisplay.h"
 #include "localization/LocaleCatalog.h"
 
 namespace screens {
@@ -22,6 +23,8 @@ namespace screens {
         languages_ = &languages;
         if (setBrightness != nullptr)
             setBrightness(config.brightnessPercent);
+        ui.setOrientation(config.rotate180 ? Board::Display::rotatedUiOrientation()
+                                           : Board::Display::defaultUiOrientation());
 
         themes.loadFromSd();
         const ui::themes::Theme& selected = themes.resolve(config.selectedThemeId);
@@ -39,7 +42,7 @@ namespace screens {
         const ui::Rect content = detail::content(ui);
         constexpr int16_t gap = 6;
         constexpr int16_t backWidth = 56;
-        constexpr int16_t topHeight = 42;
+        constexpr int16_t topHeight = 36;
         if (ui.button({content.x, content.y, backWidth, topHeight}, "<<"))
             screen = Screen::Settings;
         if (ui.slider({static_cast<int16_t>(content.x + backWidth + gap), content.y,
@@ -56,9 +59,10 @@ namespace screens {
         ui.separator({static_cast<int16_t>(content.x + halfWidth + gap), sectionsY, halfWidth, 10},
                      ui.text(UiText::StandbySection));
 
-        const int16_t firstRowY = static_cast<int16_t>(sectionsY + 14);
-        constexpr int16_t rowHeight = 40;
-        const int16_t secondRowY = static_cast<int16_t>(firstRowY + rowHeight + 4);
+        const int16_t firstRowY = static_cast<int16_t>(sectionsY + 12);
+        constexpr int16_t rowHeight = 32;
+        const int16_t secondRowY = static_cast<int16_t>(firstRowY + rowHeight + 3);
+        const int16_t thirdRowY = static_cast<int16_t>(secondRowY + rowHeight + 3);
         const ui::themes::Theme& selectedTheme = themes.resolve(config.selectedThemeId);
         if (ui.setting({content.x, firstRowY, halfWidth, rowHeight}, ui.text(UiText::Theme),
                        selectedTheme.definition.name, ui::SettingLayout::Inline)) {
@@ -74,6 +78,12 @@ namespace screens {
             config.locale = !languages_ ? std::string{Localization::kDefaultLocale}
                                         : std::string{nextLocale(*languages_, config.locale)};
             ui.setLocale(config.locale);
+            changed = true;
+        }
+
+        if (ui.toggle({content.x, thirdRowY, halfWidth, rowHeight}, ui.text(UiText::Rotate180), config.rotate180)) {
+            ui.setOrientation(config.rotate180 ? Board::Display::rotatedUiOrientation()
+                                               : Board::Display::defaultUiOrientation());
             changed = true;
         }
 

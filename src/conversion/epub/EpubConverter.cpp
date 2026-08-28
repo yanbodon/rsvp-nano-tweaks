@@ -19,6 +19,7 @@ namespace {
     constexpr size_t kMaxTocBytes = 256UL * 1024UL;
     constexpr size_t kMaxContainerBytes = 32UL * 1024UL;
     constexpr size_t kMaxCssBytes = 256UL * 1024UL;
+    constexpr size_t kMaxEncryptionBytes = 128UL * 1024UL;
 
     using EpubPackage::basenameWithoutExtension;
     using EpubPackage::directoryForPath;
@@ -307,9 +308,14 @@ namespace {
         }
 
         if (zip.contains("META-INF/encryption.xml")) {
-            ESP_LOGW("epub", "Encrypted EPUB content is unsupported");
-            zip.close();
-            return false;
+            std::string encryptionXml;
+            if (!zip.extractToString("META-INF/encryption.xml", encryptionXml, kMaxEncryptionBytes)
+                || EpubPackage::hasUnsupportedEncryption(encryptionXml)) {
+                ESP_LOGW("epub", "Encrypted EPUB content is unsupported");
+                zip.close();
+                return false;
+            }
+            ESP_LOGI("epub", "EPUB uses supported embedded-font obfuscation");
         }
 
         const auto failWithClosedZip = [&]() {
