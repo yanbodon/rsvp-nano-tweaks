@@ -955,7 +955,7 @@ private fun DisplaySettings(presenter: CompanionPresenter, settings: NanoSetting
                 IntSlider("Brightness", display.brightnessPercent, NanoSettingsSchema.BRIGHTNESS_MIN..NanoSettingsSchema.BRIGHTNESS_MAX, "%") {
                     presenter.updateSettings { current -> current.withBrightnessPercent(it) }
                 }
-                ToggleRow("Rotate screen 180°", display.rotate180) { value ->
+                ToggleRow("Rotate screen 180 degrees", display.rotate180) { value ->
                     presenter.updateSettings { it.withScreenRotation180(value) }
                 }
                 ChoiceRow("Standby", display.standbyTimerIndex.toString(), listOf("0" to "Never", "1" to "1 minute", "2" to "5 minutes", "3" to "15 minutes", "4" to "30 minutes")) { value ->

@@ -25,7 +25,7 @@ namespace {
         /* WordPacing               */ "Word pacing",
         /* Theme                    */ "Theme",
         /* Brightness               */ "Brightness",
-        /* Rotate180                */ "Rotate 180\u00B0",
+        /* Rotate180                */ "Rotate 180 degrees",
         /* Language                 */ "Language",
         /* ReadingMode              */ "Reading mode",
         /* LongWords                */ "Long words",

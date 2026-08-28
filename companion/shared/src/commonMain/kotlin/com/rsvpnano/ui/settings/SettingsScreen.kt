@@ -555,7 +555,7 @@ private fun ReadingSettings(
                 prominentHeader = true,
             )
             SwitchRow(
-                label = "Rotate screen 180°",
+                label = "Rotate screen 180 degrees",
                 checked = settings.`interface`.rotate180,
                 onCheckedChange = { checked -> onUpdateSettings { it.withScreenRotation180(checked) } },
             )
