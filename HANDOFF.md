@@ -6,7 +6,7 @@ Status: blocked before candidate validation; no remote change, push, PR, release
 
 - Integration branch: `integration/v0.1.1-tweaks`
 - Base: upstream v0.1.1 `1086e33081aa9c658d3131942c6a0f152b982055`
-- First completed local commit: `f2085ac` (`fix(ota): preserve custom owner/repository parsing`)
+- Local commits: `f2085ac` (`fix(ota): preserve custom owner/repository parsing`) and `f79df21` (`feat: port EPUB and rotation tweaks to v0.1.1`).
 - Rollback: `git switch integration/v0.1.1-tweaks && git reset --hard 1086e33081aa9c658d3131942c6a0f152b982055`
 - Original fork remains at `fork/main` = `e7d60b863f861124c8a212e618405f1e99e8f7a6`.
 
