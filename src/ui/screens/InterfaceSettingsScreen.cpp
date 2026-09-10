@@ -1,5 +1,6 @@
 #include "ui/screens/ScreenCommon.h"
 
+#include "board/BoardDisplay.h"
 #include "localization/LocaleCatalog.h"
 
 namespace screens {
@@ -8,6 +9,8 @@ namespace screens {
         languages_ = &languages;
         if (setBrightness != nullptr)
             setBrightness(config.brightnessPercent);
+        ui.setOrientation(config.rotate180 ? Board::Display::rotatedUiOrientation()
+                                           : Board::Display::defaultUiOrientation());
 
         themes.loadFromSd();
         const ui::themes::Theme& selected = themes.resolve(config.selectedThemeId);

@@ -68,6 +68,7 @@ class NanoSettingsUpdateHelpersTest {
         val original = sampleSettings()
         val updated = original
             .withBrightnessPercent(25)
+            .withScreenRotation180(true)
             .withHandedness("left")
             .withFooterMetric("chapterTime")
             .withBatteryLabel("timeRemaining")
@@ -78,6 +79,7 @@ class NanoSettingsUpdateHelpersTest {
         assertNotSame(original, updated)
         assertEquals(10, original.`interface`.brightnessPercent)
         assertEquals(25, updated.`interface`.brightnessPercent)
+        assertTrue(updated.`interface`.rotate180)
         assertTrue(updated.reading.leftHanded)
         assertEquals("chapterTime", updated.reading.footerMetric)
         assertEquals("timeRemaining", updated.reading.batteryLabel)

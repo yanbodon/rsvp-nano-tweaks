@@ -1,11 +1,13 @@
 #include "ui/screens/watch/Layout.h"
 
+#include "board/BoardDisplay.h"
+
 namespace screens {
     bool InterfaceScreen::draw(ui::Context& ui, settings::InterfaceSettings& config,
                                std::span<const uint32_t> standbyDurations, void (*setBrightness)(uint8_t),
                                Screen& screen) {
         auto area = watch::header(ui, ui.text(UiText::Display), Screen::Settings, screen);
-        auto grid = ui.pagedGrid(area, 5, 1, 56);
+        auto grid = ui.pagedGrid(area, 6, 1, 56);
         bool changed = false;
         if (watch::stepper(ui, grid.item(0), UiText::Brightness, config.brightnessPercent, "%")) {
             if (setBrightness)
@@ -34,11 +36,16 @@ namespace screens {
             ui.setLocale(config.locale);
             changed = true;
         }
+        if (watch::toggle(ui, grid.item(3), UiText::Rotate180, config.rotate180)) {
+            ui.setOrientation(config.rotate180 ? Board::Display::rotatedUiOrientation()
+                                               : Board::Display::defaultUiOrientation());
+            changed = true;
+        }
         const size_t index = config.standbyTimerIndex;
         const std::string duration = index < standbyDurations.size() && standbyDurations[index]
                                        ? std::to_string(standbyDurations[index] / 60000) + "m"
                                        : std::string{ui.text(UiText::Off)};
-        if (watch::setting(ui, grid.item(3), UiText::Standby, duration)) {
+        if (watch::setting(ui, grid.item(4), UiText::Standby, duration)) {
             config.standbyTimerIndex.cycle();
             changed = true;
         }
@@ -47,7 +54,7 @@ namespace screens {
                           : config.screensaver == standby::Kind::reaction  ? UiText::Reaction
                           : config.screensaver == standby::Kind::screenOff ? UiText::ScreenOff
                                                                            : UiText::Life;
-        if (watch::setting(ui, grid.item(4), UiText::Screensaver, ui.text(kind))) {
+        if (watch::setting(ui, grid.item(5), UiText::Screensaver, ui.text(kind))) {
             config.screensaver = settings::cycleEnum(config.screensaver);
             changed = true;
         }

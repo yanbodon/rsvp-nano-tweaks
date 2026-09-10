@@ -26,6 +26,17 @@
   <a href="https://discord.gg/mB5xv2PG53">Discord</a>
 </p>
 
+## RSVP Nano Tweaks
+
+This fork adds a small set of practical fixes for the Waveshare ESP32-S3 Touch LCD 3.49 Rev2:
+
+- preserves Unicode letters, including Polish diacritics, in uploaded book filenames;
+- accepts EPUB font obfuscation while continuing to reject encrypted book content;
+- adds a persistent 180-degree screen rotation setting with matching touch coordinates.
+
+See [the RSVP Nano Tweaks release notes](docs/releases/v0.0.9-tweaks.1.md) for installation and
+compatibility details. The project remains based on the upstream RSVP Nano firmware.
+
 ## What is RSVP Nano?
 
 RSVP Nano is a small standalone reader that presents text one word at a time using Rapid Serial

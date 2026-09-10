@@ -1,5 +1,6 @@
 #include "ui/screens/ScreenCommon.h"
 
+#include "board/BoardDisplay.h"
 #include "localization/LocaleCatalog.h"
 
 namespace screens {
@@ -59,6 +60,13 @@ namespace screens {
             config.locale = !languages_ ? std::string{Localization::kDefaultLocale}
                                         : std::string{nextLocale(*languages_, config.locale)};
             ui.setLocale(config.locale);
+            changed = true;
+        }
+
+        const int16_t thirdRowY = static_cast<int16_t>(secondRowY + rowHeight + 4);
+        if (ui.toggle({content.x, thirdRowY, halfWidth, rowHeight}, ui.text(UiText::Rotate180), config.rotate180)) {
+            ui.setOrientation(config.rotate180 ? Board::Display::rotatedUiOrientation()
+                                               : Board::Display::defaultUiOrientation());
             changed = true;
         }
 

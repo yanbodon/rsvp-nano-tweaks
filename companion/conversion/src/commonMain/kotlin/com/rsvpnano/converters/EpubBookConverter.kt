@@ -19,7 +19,8 @@ internal object EpubBookConverter {
 
     fun convert(entries: Map<String, ByteArray>, filename: String): RsvpBookFile {
         val normalizedEntries = entries.mapKeys { (path, _) -> EpubUtils.normalizeZipPath(path).lowercase() }
-        if (normalizedEntries.containsKey("meta-inf/encryption.xml")) {
+        val encryptionXml = normalizedEntries["meta-inf/encryption.xml"]?.let(RsvpTextUtils::decodeText)
+        if (encryptionXml != null && hasUnsupportedEncryption(encryptionXml)) {
             throw RsvpConversionError.unsupportedEpub
         }
         val containerXml = normalizedEntries["meta-inf/container.xml"]
@@ -72,6 +73,17 @@ internal object EpubBookConverter {
             source = filename,
             events = events,
         )
+    }
+
+    internal fun hasUnsupportedEncryption(xml: String): Boolean {
+        val allowedFontObfuscation = setOf(
+            "http://www.idpf.org/2008/embedding",
+            "http://ns.adobe.com/pdf/enc#RC",
+        )
+        val methods = parseXml(xml).allElements()
+            .filter { it.localName() == "encryptionmethod" }
+            .map { it.attr("Algorithm") }
+        return methods.isEmpty() || methods.any { it !in allowedFontObfuscation }
     }
 
     private fun containerRootfile(xml: String): String? {

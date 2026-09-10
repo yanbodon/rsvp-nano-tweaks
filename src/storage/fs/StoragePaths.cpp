@@ -4,6 +4,8 @@
 #include <iterator>
 
 #include "text/AsciiText.h"
+#include "text/UnicodeText.h"
+#include "text/Utf8Text.h"
 
 namespace StoragePaths {
     namespace {
@@ -39,12 +41,29 @@ namespace StoragePaths {
     std::string sanitizeFilename(std::string_view name) {
         std::string sanitized;
         sanitized.reserve(name.size());
-        std::ranges::transform(name, std::back_inserter(sanitized), [](char character) {
-            return AsciiText::isAlphaNumeric(character) || character == '-' || character == '_'
-                    || character == '.' || character == ' '
-                     ? character
-                     : '-';
-        });
+        while (!name.empty()) {
+            const std::string_view remaining = name;
+            uint32_t codepoint = 0;
+            if (!Utf8Text::decode(name, codepoint)) {
+                sanitized += '-';
+                continue;
+            }
+
+            const size_t codepointBytes = remaining.size() - name.size();
+            const auto category = UnicodeText::generalCategory(codepoint);
+            const bool combiningMark = category == HB_UNICODE_GENERAL_CATEGORY_SPACING_MARK
+                                    || category == HB_UNICODE_GENERAL_CATEGORY_ENCLOSING_MARK
+                                    || category == HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK;
+            if (UnicodeText::isLetter(codepoint) || UnicodeText::isDigit(codepoint) || combiningMark) {
+                sanitized.append(remaining.substr(0, codepointBytes));
+            } else if (codepoint == '-' || codepoint == '_' || codepoint == '.' || codepoint == ' ') {
+                sanitized += static_cast<char>(codepoint);
+            } else if (UnicodeText::isWhitespace(codepoint)) {
+                sanitized += ' ';
+            } else {
+                sanitized += '-';
+            }
+        }
         sanitized = AsciiText::trim(sanitized);
         const size_t firstVisible = sanitized.find_first_not_of('.');
         return firstVisible == std::string::npos ? std::string{} : sanitized.substr(firstVisible);

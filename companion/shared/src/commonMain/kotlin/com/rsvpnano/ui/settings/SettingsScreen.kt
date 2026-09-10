@@ -554,6 +554,11 @@ private fun ReadingSettings(
                 onValueChangeFinished = { value -> onUpdateSettings { it.withWpm(value.toInt()) } },
                 prominentHeader = true,
             )
+            SwitchRow(
+                label = "Rotate screen 180°",
+                checked = settings.`interface`.rotate180,
+                onCheckedChange = { checked -> onUpdateSettings { it.withScreenRotation180(checked) } },
+            )
             SegmentedChoiceRow(
                 label = "Pause behavior",
                 description = "Choose whether pause waits for the sentence to finish.",

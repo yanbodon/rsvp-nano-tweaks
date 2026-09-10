@@ -5,6 +5,7 @@ import com.rsvpnano.converters.RsvpConverter
 import com.rsvpnano.converters.RsvpEvent
 import com.rsvpnano.converters.ArticleFormatter
 import com.rsvpnano.converters.RsvpSupportedFileTypes
+import com.rsvpnano.converters.EpubBookConverter
 import kotlinx.coroutines.test.runTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -202,6 +203,33 @@ class RsvpParityTest {
         assertFailsWith<RsvpConversionError> {
             RsvpConverter.bookFile(byteArrayOf(), "sample.epub")
         }
+    }
+
+    @Test
+    fun epubFontObfuscationIsNotTreatedAsContentEncryption() {
+        val fontObfuscation = """<encryption><EncryptedData>
+            <EncryptionMethod Algorithm="http://www.idpf.org/2008/embedding"/>
+            </EncryptedData></encryption>"""
+        val contentEncryption = """<encryption><EncryptedData>
+            <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc"/>
+            </EncryptedData></encryption>"""
+
+        assertEquals(false, EpubBookConverter.hasUnsupportedEncryption(fontObfuscation))
+        assertEquals(true, EpubBookConverter.hasUnsupportedEncryption(contentEncryption))
+        assertEquals(true, EpubBookConverter.hasUnsupportedEncryption("<encryption/>"))
+    }
+
+    @Test
+    fun generatedFilenameKeepsPolishLetters() {
+        val file = RsvpConverter.rsvpFile(
+            title = "Męczennik!",
+            source = "Męczennik.epub",
+            text = "Zażółć gęślą jaźń.",
+        )
+
+        assertEquals("Męczennik-.rsvp", file.filename)
+        assertEquals(true, file.data.decodeToString().contains("@title Męczennik!"))
+        assertEquals(true, file.data.decodeToString().contains("Zażółć gęślą jaźń."))
     }
 
     @Test
