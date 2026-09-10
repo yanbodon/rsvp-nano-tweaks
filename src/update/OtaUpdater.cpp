@@ -61,31 +61,19 @@ namespace {
         return encoded;
     }
 
-    bool splitOwnerRepo(std::string_view value, std::string& owner, std::string& repo) {
-        const std::string_view trimmed = AsciiText::trim(value);
-        const size_t slash = trimmed.find('/');
-        if (slash == 0 || slash == std::string_view::npos || slash + 1 >= trimmed.length()) {
-            return false;
-        }
-
-        owner = AsciiText::trim(trimmed.substr(0, slash));
-        repo = AsciiText::trim(trimmed.substr(slash + 1));
-        return !owner.empty() && !repo.empty();
-    }
-
     ReleaseSource releaseSourceForSettings(const settings::UpdateSettings& settings) {
         ReleaseSource source{settings.repositoryOwner.empty() ? std::string{settings::kDefaultRepositoryOwner}
                                                               : std::string{AsciiText::trim(settings.repositoryOwner)},
                              "rsvpnano", std::string{AsciiText::trim(settings.releaseTag)}};
 
-        splitOwnerRepo(source.owner, source.owner, source.repo);
-        splitOwnerRepo(source.repo, source.owner, source.repo);
+        releaseparser::splitOwnerRepo(source.owner, source.owner, source.repo);
+        releaseparser::splitOwnerRepo(source.repo, source.owner, source.repo);
 
         const size_t at = source.tag.find('@');
         if (at > 0 && at + 1 < source.tag.length()) {
             std::string repoPart{AsciiText::trim(std::string_view{source.tag}.substr(0, at))};
             source.tag = std::string{AsciiText::trim(std::string_view{source.tag}.substr(at + 1))};
-            if (!splitOwnerRepo(repoPart, source.owner, source.repo) && !repoPart.empty()) {
+            if (!releaseparser::splitOwnerRepo(repoPart, source.owner, source.repo) && !repoPart.empty()) {
                 source.repo = repoPart;
             }
         }

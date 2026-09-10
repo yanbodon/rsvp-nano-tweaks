@@ -6,6 +6,15 @@ void setUp() {}
 
 void tearDown() {}
 
+void test_split_owner_repo_supports_aliased_input() {
+    std::string owner = "yanbodon/rsvp-nano-tweaks";
+    std::string repo = "rsvpnano";
+
+    TEST_ASSERT_TRUE(releaseparser::splitOwnerRepo(owner, owner, repo));
+    TEST_ASSERT_EQUAL_STRING("yanbodon", owner.c_str());
+    TEST_ASSERT_EQUAL_STRING("rsvp-nano-tweaks", repo.c_str());
+}
+
 void test_extracts_tag_from_asset_redirect() {
     constexpr std::string_view asset = "rsvp-nano-esp32-s3-touch-lcd-3.49-ota.bin";
     const auto tag = releaseparser::tagFromAssetLocation(
@@ -34,6 +43,7 @@ void test_builds_version_from_release_tag_and_commit() {
 
 int main(void) {
     UNITY_BEGIN();
+    RUN_TEST(test_split_owner_repo_supports_aliased_input);
     RUN_TEST(test_extracts_tag_from_asset_redirect);
     RUN_TEST(test_rejects_invalid_asset_redirects);
     RUN_TEST(test_builds_version_from_release_tag_and_commit);

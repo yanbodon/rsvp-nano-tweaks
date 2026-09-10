@@ -2,10 +2,31 @@
 
 #include <algorithm>
 #include <cctype>
+#include <utility>
 
 #include "text/AsciiText.h"
 
 namespace releaseparser {
+    bool splitOwnerRepo(std::string_view value, std::string& owner, std::string& repo) {
+        const std::string_view trimmed = AsciiText::trim(value);
+        const size_t slash = trimmed.find('/');
+        if (slash == 0 || slash == std::string_view::npos || slash + 1 >= trimmed.length()) {
+            return false;
+        }
+
+        // Keep parsed values independent of `value`: an output string may
+        // also be the storage backing the input view.
+        std::string parsedOwner{AsciiText::trim(trimmed.substr(0, slash))};
+        std::string parsedRepo{AsciiText::trim(trimmed.substr(slash + 1))};
+        if (parsedOwner.empty() || parsedRepo.empty()) {
+            return false;
+        }
+
+        owner = std::move(parsedOwner);
+        repo = std::move(parsedRepo);
+        return true;
+    }
+
     std::expected<std::string, std::error_code> tagFromAssetLocation(std::string_view location,
                                                                     std::string_view assetName) {
         constexpr std::string_view marker = "/releases/download/";
