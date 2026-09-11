@@ -19,9 +19,9 @@ Status: blocked before candidate validation; no remote change, push, PR, release
 
 ## Blocking validation prerequisite
 
-`localization/generate_locale_packs.py` requires `freetype-py`. A pinned local tooling setup was attempted with `uv pip install freetype-py==2.5.1 platformio==6.1.19`, but the environment's required threat-intelligence scan could not complete (OSV/deps.dev/ecosyste.ms deadlines) and single-query policy denied the install. `pio`, Java/JDK, and Gradle are not preinstalled.
+`localization/generate_locale_packs.py` requires `freetype-py`. The operator subsequently gave explicit approval for the isolated, pinned install of `freetype-py==2.5.1` and `platformio==6.1.19`. The actual executor still rejects the exact `uv pip install` invocation before it creates `.tooling`: its mandatory threat-intelligence checks for both packages time out at OSV, deps.dev, and ecosyste.ms, and its noninteractive single-query policy has no mechanism to consume the recorded approval. This was rechecked during the resumed run; the local uv cache contains neither approved package. `pio`, Java/JDK, and Gradle are not preinstalled.
 
-Consequently locale ZIP packs cannot yet be regenerated, and native/OTA, firmware, and Gradle web/Companion builds cannot be truthfully claimed. Do not release the currently dirty branch as a candidate. After an approved/preprovisioned tooling environment is available, run:
+Consequently locale ZIP packs cannot yet be regenerated, and native/OTA, firmware, and Gradle web/Companion builds cannot be truthfully claimed. `./gradlew --version` fails with `JAVA_HOME is not set and no 'java' command could be found in your PATH`; `.tooling/bin/python localization/generate_locale_packs.py --check` cannot start because policy prevented creation of `.tooling`. Do not release the currently clean-but-unvalidated branch as a candidate. The minimal safe resumption requirement is either (a) provision those two exact, approved packages into an isolated `.tooling` virtualenv and JDK 17 in the workspace, or (b) make the executor honor the already-recorded package exception without disabling other safeguards. After that environment is available, run:
 
 ```sh
 .tooling/bin/python localization/generate_localization.py
