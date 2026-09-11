@@ -35,3 +35,10 @@ Consequently locale-pack checks, preserved native test execution, and the prior 
 ```sh
 JAVA_HOME="$PWD/.tooling/jdk17" ./gradlew :webApp:wasmJsBrowserProductionWebpack --no-daemon --max-workers=1 -Pkotlin.compiler.execution.strategy=in-process
 ```
+
+## Packaging milestone
+
+- `INTEGRATION_REPORT.md` maps every requested tweak to its v0.1.1 implementation and recorded test evidence; `RELEASE_NOTES.md` documents the local candidate as `v0.1.1-tweaks.1` without creating a tag or release.
+- Packaging produces an offline Git bundle containing the complete history through `integration/v0.1.1-tweaks` (and therefore the upstream `v0.1.1` base), plus a binary-safe full patch from `1086e33081aa9c658d3131942c6a0f152b982055` to the candidate tip.
+- Fresh bundle clone/restore is verified by checking out the integration branch, confirming the base object and ancestry, running `git diff --check`, and checking that the patch applies with `git apply --check` on the detached base.
+- Deliverables are stored outside the repository working tree under `/workspace/t_f3f43353/deliverables/`; `.tooling/` and temporary clone material remain ignored/untracked local tooling only.
