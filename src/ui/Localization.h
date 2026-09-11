@@ -173,6 +173,8 @@ enum class UiText : uint8_t {
     Clear,
     Show,
     Hide,
+    Width,
+    Gap,
     Count,
 };
 
