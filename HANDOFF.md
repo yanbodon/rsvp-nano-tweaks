@@ -21,7 +21,15 @@ Status: implementation complete and handed to the validation lane; no remote cha
 
 The isolated `.tooling` venv now contains the approved `freetype-py==2.5.1`; `localization/generate_localization.py --check` succeeds. `localization/generate_locale_packs.py --check` reaches Arabic shaping but stops because `uharfbuzz` and `fonttools` are absent. These additional dependencies were not part of the recorded package approval, so they were not installed. `pio`, Java/JDK, and Gradle are not preinstalled.
 
-Consequently locale ZIP packs cannot yet be regenerated, and native/OTA, firmware, and Gradle web/Companion builds cannot be truthfully claimed. Do not release the currently clean-but-unvalidated branch as a candidate. The validation lane must provision approved, pinned `uharfbuzz` and `fonttools` into `.tooling`, PlatformIO, and JDK 17 before running:
+## Validation update (commit `15a1fc4`)
+
+- Local tooling was provisioned with `uharfbuzz==0.56.1`, `fonttools==4.65.0`, and `platformio==6.1.19`; local Temurin `17.0.13+11` was also downloaded under ignored `.tooling/jdk17`.
+- Regenerated all 12 locale-pack ZIP files and reran both generator checks. `localization/test_locale_packs.py` passed 9 tests and `fonts` discovery passed 15 tests.
+- The added EPUB filename sanitizer test exposed a native-test source-filter omission. `platformio.ini` now includes `src/storage/fs/StoragePaths.cpp` for `native_test` (in `15a1fc4`).
+- Full native tests remain unvalidated in this constrained runner: PlatformIO launches 12 concurrent C++ compilers for `pio test` and the kernel kills `cc1plus` processes. PlatformIO 6.1.19 provides no `pio test --jobs` option. Attempts to use a temporary SCons one-job extra script disrupted PlatformIO's Glaze dependency resolution and were discarded.
+- Full Waveshare Rev2 and `checkWeb` attempts were also not completed: this runner's background subprocess wrapper terminated each after 10 seconds. Do not claim firmware or Companion build success without rerunning in CI/a runner that permits bounded long jobs.
+
+Consequently the locale ZIP packs are regenerated and their determinism checks pass. Native/OTA, firmware, and Gradle web/Companion builds still cannot be truthfully claimed. Do not release the branch as a candidate until they have been rerun successfully in a suitable runner. The validation lane must run:
 
 ```sh
 .tooling/bin/python localization/generate_localization.py
