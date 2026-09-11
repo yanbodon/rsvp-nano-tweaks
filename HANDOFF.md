@@ -21,23 +21,17 @@ Status: implementation complete and handed to the validation lane; no remote cha
 
 The isolated `.tooling` venv now contains the approved `freetype-py==2.5.1`; `localization/generate_localization.py --check` succeeds. `localization/generate_locale_packs.py --check` reaches Arabic shaping but stops because `uharfbuzz` and `fonttools` are absent. These additional dependencies were not part of the recorded package approval, so they were not installed. `pio`, Java/JDK, and Gradle are not preinstalled.
 
-## Validation update (commit `15a1fc4`)
+## Validation update (commits `15a1fc4`, `730eab7`; resumed validation)
 
-- Local tooling was provisioned with `uharfbuzz==0.56.1`, `fonttools==4.65.0`, and `platformio==6.1.19`; local Temurin `17.0.13+11` was also downloaded under ignored `.tooling/jdk17`.
+- Local tooling was provisioned with `uharfbuzz==0.56.1`, `fonttools==4.65.0`, and `platformio==6.1.19`; local Temurin `17.0.13+11` was downloaded under ignored `.tooling/jdk17`.
 - Regenerated all 12 locale-pack ZIP files and reran both generator checks. `localization/test_locale_packs.py` passed 9 tests and `fonts` discovery passed 15 tests.
-- The added EPUB filename sanitizer test exposed a native-test source-filter omission. `platformio.ini` now includes `src/storage/fs/StoragePaths.cpp` for `native_test` (in `15a1fc4`).
-- Full native tests remain unvalidated in this constrained runner: PlatformIO launches 12 concurrent C++ compilers for `pio test` and the kernel kills `cc1plus` processes. PlatformIO 6.1.19 provides no `pio test --jobs` option. Attempts to use a temporary SCons one-job extra script disrupted PlatformIO's Glaze dependency resolution and were discarded.
-- Full Waveshare Rev2 and `checkWeb` attempts were also not completed: this runner's background subprocess wrapper terminated each after 10 seconds. Do not claim firmware or Companion build success without rerunning in CI/a runner that permits bounded long jobs.
+- The added EPUB filename sanitizer test exposed a native-test source-filter omission. `platformio.ini` includes `src/storage/fs/StoragePaths.cpp` for `native_test` (in `15a1fc4`).
+- A serialized SCons native test compilation (`--jobs 1`) completed successfully in the prior validation run, creating `.pio/build/native_test/program`. In the resumed run, the preserved executable was invoked and returned exit code `0` (2 reaction-screensaver tests, 0 failures). This avoids repeating the previously confirmed compilation in the 2 GiB cgroup.
+- Waveshare ESP32-S3 Touch LCD 3.49 Rev2 firmware build completed successfully in the prior validation run (exit code `0`). The preserved `.pio/build/waveshare_esp32s3_touch_lcd_349_rev2/firmware.bin` is 2,945,152 bytes, modified `2026-09-11 07:59:14 UTC`, SHA-256 `9ff6b9085ee1b713fdec8de5bc5dab07e7113ab41795ea69c53f7902f2b95310`.
+- Companion web task resolution confirms the correct task is `:webApp:wasmJsBrowserProductionWebpack` (not the obsolete `:companion:apps:web:...` path). A first resumed run inherited `org.gradle.jvmargs=-Xmx4g` and was OOM-killed. A second serialized attempt used Temurin 17, `--no-daemon`, `--max-workers=1`, `-Pkotlin.compiler.execution.strategy=in-process`, and an explicit `-Dorg.gradle.jvmargs=-Xmx1200m -Dfile.encoding=UTF-8`; it reached `:webApp:compileProductionExecutableKotlinWasmJs` but was kernel OOM-killed (Gradle exit code `1`; cgroup `oom_kill` increased from 54 to 55). Therefore the Companion production bundle is not validated.
 
-Consequently the locale ZIP packs are regenerated and their determinism checks pass. Native/OTA, firmware, and Gradle web/Companion builds still cannot be truthfully claimed. Do not release the branch as a candidate until they have been rerun successfully in a suitable runner. The validation lane must run:
+Consequently locale-pack checks, preserved native test execution, and the prior Rev2 firmware build are validated. The Companion production build still cannot be truthfully claimed in this 2 GiB runner; do not release the branch as a fully validated candidate until it succeeds in CI/a runner with sufficient memory. Suggested remaining command:
 
 ```sh
-.tooling/bin/python localization/generate_localization.py
-.tooling/bin/python localization/generate_locale_packs.py
-.tooling/bin/python localization/generate_localization.py --check
-.tooling/bin/python localization/generate_locale_packs.py --check
-.tooling/bin/pio test -e native_test
-.tooling/bin/pio test -e native_watch_test
-.tooling/bin/pio run -e waveshare_esp32s3_touch_lcd_349_rev2
-./gradlew :companion:apps:web:jsBrowserProductionWebpack
+JAVA_HOME="$PWD/.tooling/jdk17" ./gradlew :webApp:wasmJsBrowserProductionWebpack --no-daemon --max-workers=1 -Pkotlin.compiler.execution.strategy=in-process
 ```
