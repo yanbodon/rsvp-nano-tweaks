@@ -26,13 +26,13 @@ void test_empty_source_follows_tweaks_latest_release() {
 }
 
 void test_migration_clears_only_legacy_tweaks_bootstrap() {
-    settings::UpdateSettings legacy{"", "yanbodon/rsvp-nano-tweaks@v0.1.1-tweaks.1"};
+    settings::UpdateSettings legacy{false, "", "yanbodon/rsvp-nano-tweaks@v0.1.1-tweaks.1"};
     TEST_ASSERT_TRUE(releaseparser::migrateTweaksReleaseSettings(legacy));
     TEST_ASSERT_TRUE(legacy.repositoryOwner.empty());
     TEST_ASSERT_TRUE(legacy.releaseTag.empty());
     TEST_ASSERT_TRUE(releaseparser::migrateTweaksReleaseSettings(legacy));
 
-    settings::UpdateSettings custom{"example/custom", "v9"};
+    settings::UpdateSettings custom{false, "example/custom", "v9"};
     TEST_ASSERT_FALSE(releaseparser::migrateTweaksReleaseSettings(custom));
     TEST_ASSERT_EQUAL_STRING("example/custom", custom.repositoryOwner.c_str());
     TEST_ASSERT_EQUAL_STRING("v9", custom.releaseTag.c_str());
