@@ -22,11 +22,6 @@ namespace {
         "Location",
     };
 
-    struct ReleaseSource {
-        std::string owner;
-        std::string repo;
-        std::string tag;
-    };
 
     struct LatestRelease {
         std::string version;
@@ -61,25 +56,6 @@ namespace {
         return encoded;
     }
 
-    ReleaseSource releaseSourceForSettings(const settings::UpdateSettings& settings) {
-        ReleaseSource source{settings.repositoryOwner.empty() ? std::string{settings::kDefaultRepositoryOwner}
-                                                              : std::string{AsciiText::trim(settings.repositoryOwner)},
-                             "rsvpnano", std::string{AsciiText::trim(settings.releaseTag)}};
-
-        releaseparser::splitOwnerRepo(source.owner, source.owner, source.repo);
-        releaseparser::splitOwnerRepo(source.repo, source.owner, source.repo);
-
-        const size_t at = source.tag.find('@');
-        if (at > 0 && at + 1 < source.tag.length()) {
-            std::string repoPart{AsciiText::trim(std::string_view{source.tag}.substr(0, at))};
-            source.tag = std::string{AsciiText::trim(std::string_view{source.tag}.substr(at + 1))};
-            if (!releaseparser::splitOwnerRepo(repoPart, source.owner, source.repo) && !repoPart.empty()) {
-                source.repo = repoPart;
-            }
-        }
-
-        return source;
-    }
 
     std::string httpClientErrorDetail(std::string_view prefix, int statusCode) {
         if (statusCode >= 0) {
@@ -177,7 +153,7 @@ static std::expected<std::string, std::string> resolveDownloadUrl(std::string_vi
 static std::expected<LatestRelease, std::string> fetchRelease(const settings::UpdateSettings& settings,
                                                                OtaUpdater::StatusCallback callback, void* context) {
     const std::string installedVersion{OtaUpdater::currentVersion()};
-    const ReleaseSource source = releaseSourceForSettings(settings);
+    const releaseparser::ReleaseSource source = releaseparser::sourceForSettings(settings);
     if (source.owner.empty() || source.repo.empty())
         return std::unexpected(std::string{"GitHub source missing"});
 
@@ -200,11 +176,7 @@ static std::expected<LatestRelease, std::string> fetchRelease(const settings::Up
 
     const std::string assetName = urlEncodePathSegment(Board::Config::OTA_ASSET_NAME);
     std::string releaseTag = source.tag;
-    std::string assetUrl = "https://github.com/" + source.owner + "/" + source.repo + "/releases/";
-    if (releaseTag.empty())
-        assetUrl += "latest/download/" + assetName;
-    else
-        assetUrl += "download/" + urlEncodePathSegment(releaseTag) + "/" + assetName;
+    std::string assetUrl = releaseparser::assetUrlForSource({source.owner, source.repo, releaseTag}, assetName);
 
     if (releaseTag.empty()) {
         if (!http.begin(client, assetUrl.c_str()))

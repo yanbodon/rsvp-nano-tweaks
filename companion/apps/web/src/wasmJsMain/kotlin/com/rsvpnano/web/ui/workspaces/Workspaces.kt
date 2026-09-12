@@ -68,6 +68,10 @@ import com.rsvpnano.models.NanoFocusTimers
 import com.rsvpnano.models.NanoLocales
 import com.rsvpnano.models.NanoSettings
 import com.rsvpnano.models.NanoSettingsSchema
+import com.rsvpnano.models.OtaSourcePreset
+import com.rsvpnano.models.isValidGithubRepository
+import com.rsvpnano.models.otaSourcePreset
+import com.rsvpnano.models.withOtaSource
 import com.rsvpnano.models.PendingUpload
 import com.rsvpnano.library.needsArticleFetch
 import com.rsvpnano.presentation.CompanionPresenter
@@ -989,6 +993,7 @@ private fun DisplaySettings(presenter: CompanionPresenter, settings: NanoSetting
 private fun UpdateSettings(presenter: CompanionPresenter, state: CompanionUiState, settings: NanoSettings) {
     var ownerDraft by remember(settings.updates.repositoryOwner) { mutableStateOf(settings.updates.repositoryOwner) }
     var tagDraft by remember(settings.updates.releaseTag) { mutableStateOf(settings.updates.releaseTag) }
+    var sourcePreset by remember(settings.updates.repositoryOwner) { mutableStateOf(otaSourcePreset(settings.updates.repositoryOwner)) }
     SettingsPageHeader("Updates", "Control automatic checks and the release source used by this Nano.")
     ResponsiveSettingsColumns(
         first = {
@@ -1001,33 +1006,42 @@ private fun UpdateSettings(presenter: CompanionPresenter, state: CompanionUiStat
         },
         second = {
             SettingsPanel("Release source") {
-                OutlinedTextField(
+                Text("Choose a source; blank tag follows its latest release.", style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OtaSourcePreset.entries.forEach { preset ->
+                        FilterChip(selected = sourcePreset == preset, onClick = { sourcePreset = preset }, label = { Text(preset.label) })
+                    }
+                }
+                if (sourcePreset == OtaSourcePreset.Custom) OutlinedTextField(
                     value = ownerDraft,
                     onValueChange = { ownerDraft = it },
-                    label = { Text("Repository owner or owner/repository") },
+                    label = { Text("Custom owner/repository") },
+                    isError = ownerDraft.isNotBlank() && !isValidGithubRepository(ownerDraft),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = tagDraft,
                     onValueChange = { tagDraft = it },
-                    label = { Text("Release tag") },
+                    label = { Text("Advanced: release tag") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
                 Text(
-                    "Leave both blank to use the official RSVP Nano releases.",
+                    "My tweaks is the default: yanbodon/rsvp-nano-tweaks. Leave the advanced tag blank for latest.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
                 )
                 Button(
                     onClick = {
                         presenter.updateSettings {
-                            it.withUpdateOwner(ownerDraft.trim()).withUpdateTag(tagDraft.trim())
+                            it.withOtaSource(sourcePreset, ownerDraft).withUpdateTag(tagDraft.trim())
                         }
                     },
-                    enabled = ownerDraft.trim() != settings.updates.repositoryOwner ||
-                        tagDraft.trim() != settings.updates.releaseTag,
+                    enabled = (sourcePreset != OtaSourcePreset.Custom || isValidGithubRepository(ownerDraft)) &&
+                        (sourcePreset != otaSourcePreset(settings.updates.repositoryOwner) ||
+                            ownerDraft.trim() != settings.updates.repositoryOwner ||
+                            tagDraft.trim() != settings.updates.releaseTag),
                 ) { Text("Save source") }
             }
         },

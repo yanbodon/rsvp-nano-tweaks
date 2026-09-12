@@ -1,6 +1,22 @@
 name: Pages
 
 on:
+  pull_request:
+    paths:
+      - 'companion/apps/web/**'
+      - 'companion/shared/**'
+      - 'companion/conversion/**'
+      - 'companion/build-logic/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradle/**'
+      - 'kotlin-js-store/wasm/**'
+      - 'tools/fetch_release_firmware.py'
+      - 'tools/check_pages_site.py'
+      - 'tools/export_web_firmware.py'
+      - '.github/workflows/pages.yml'
   push:
     branches: [main]
     paths:
@@ -15,6 +31,7 @@ on:
       - 'gradle/**'
       - 'kotlin-js-store/wasm/**'
       - 'tools/fetch_release_firmware.py'
+      - 'tools/check_pages_site.py'
       - 'tools/export_web_firmware.py'
       - '.github/workflows/pages.yml'
   workflow_run:
@@ -28,10 +45,15 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # Only the upstream project and the designated fork may publish Pages.
+    if: >-
+      (github.repository == 'ionutdecebal/rsvpnano' || github.repository == 'yanbodon/rsvp-nano-tweaks') &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pages: write
+      id-token: write
 
     steps:
       - name: Check out repository
@@ -54,7 +76,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Download latest release firmware
-        if: github.repository == 'ionutdecebal/rsvpnano'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python tools/fetch_release_firmware.py --repo "${{ github.repository }}"
@@ -62,23 +83,35 @@ jobs:
       - name: Check and stage web companion
         run: bash ./gradlew checkWeb --no-daemon
 
+      - name: Smoke-test staged Pages site
+        run: |
+          if [ "${{ github.repository }}" = 'yanbodon/rsvp-nano-tweaks' ]; then
+            python tools/check_pages_site.py --site build/webSite --base-path /rsvp-nano-tweaks/
+          else
+            python tools/check_pages_site.py --site build/webSite --base-path /rsvpnano/
+          fi
+
+      # PRs compile and smoke-test but never enable, upload, or deploy Pages.
       - name: Configure GitHub Pages
-        if: github.repository == 'ionutdecebal/rsvpnano'
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v6
+        with:
+          enablement: true
 
       - name: Upload GitHub Pages artifact
-        if: github.repository == 'ionutdecebal/rsvpnano'
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5
         with:
           path: build/webSite
 
   deploy:
-    if: github.repository == 'ionutdecebal/rsvpnano' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.repository == 'ionutdecebal/rsvpnano' || github.repository == 'yanbodon/rsvp-nano-tweaks') &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     needs: build
     runs-on: ubuntu-latest
-
     permissions:
-      contents: read
       pages: write
       id-token: write
 

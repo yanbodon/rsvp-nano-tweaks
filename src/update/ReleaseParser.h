@@ -5,8 +5,20 @@
 #include <string_view>
 #include <system_error>
 
+#include "settings/SettingsModel.h"
+
 // Pure parsing of GitHub release metadata. No networking or SD access.
 namespace releaseparser {
+
+    struct ReleaseSource {
+        std::string owner;
+        std::string repo;
+        std::string tag;
+    };
+
+    ReleaseSource sourceForSettings(const settings::UpdateSettings& settings);
+    std::string assetUrlForSource(const ReleaseSource& source, std::string_view assetName);
+    bool migrateTweaksReleaseSettings(settings::UpdateSettings& settings);
 
     bool splitOwnerRepo(std::string_view value, std::string& owner, std::string& repo);
 

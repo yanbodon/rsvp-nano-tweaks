@@ -79,6 +79,10 @@ import androidx.compose.ui.unit.sp
 import com.rsvpnano.models.NanoLocales
 import com.rsvpnano.models.NanoSettings
 import com.rsvpnano.models.NanoSettingsSchema
+import com.rsvpnano.models.OtaSourcePreset
+import com.rsvpnano.models.isValidGithubRepository
+import com.rsvpnano.models.otaSourcePreset
+import com.rsvpnano.models.withOtaSource
 import com.rsvpnano.updates.releaseSource
 import com.rsvpnano.presentation.*
 import com.rsvpnano.ui.*
@@ -441,6 +445,9 @@ private fun DeviceSettings(
                 var tagDraft by remember(settings.updates.releaseTag) {
                     mutableStateOf(settings.updates.releaseTag)
                 }
+                var sourcePreset by remember(settings.updates.repositoryOwner) {
+                    mutableStateOf(otaSourcePreset(settings.updates.repositoryOwner))
+                }
                 SettingsStatusRow(
                     icon = Icons.Outlined.SystemUpdate,
                     title = "Installed firmware",
@@ -449,31 +456,39 @@ private fun DeviceSettings(
                         if (uiState.otaAsset.isNotBlank()) append("\nOTA image: ${uiState.otaAsset}")
                     },
                 )
-                OutlinedTextField(
+                Text("Release source", style = MaterialTheme.typography.titleSmall)
+                OtaSourcePreset.entries.forEach { preset ->
+                    Row(Modifier.fillMaxWidth().selectable(selected = sourcePreset == preset, onClick = { sourcePreset = preset })) {
+                        RadioButton(selected = sourcePreset == preset, onClick = null)
+                        Text(preset.label, Modifier.padding(top = 12.dp))
+                    }
+                }
+                if (sourcePreset == OtaSourcePreset.Custom) OutlinedTextField(
                     value = ownerDraft,
                     onValueChange = { ownerDraft = it.take(63) },
-                    label = { Text("GitHub owner") },
-                    supportingText = { Text("You can also use owner/repository.") },
+                    label = { Text("owner/repository") },
+                    isError = ownerDraft.isNotBlank() && !isValidGithubRepository(ownerDraft),
+                    supportingText = { Text("Enter a valid GitHub owner/repository.") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = tagDraft,
                     onValueChange = { tagDraft = it.take(63) },
-                    label = { Text("Release tag") },
-                    supportingText = { Text("Leave blank to follow the latest release.") },
+                    label = { Text("Advanced: release tag") },
+                    supportingText = { Text("Optional. Leave blank to follow the latest release.") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Button(
                     onClick = {
                         onUpdateSettings {
-                            it.withUpdateOwner(ownerDraft.trim())
-                                .withUpdateTag(tagDraft.trim())
+                            it.withOtaSource(sourcePreset, ownerDraft).withUpdateTag(tagDraft.trim())
                         }
                     },
-                    enabled = ownerDraft.isNotBlank() &&
-                        (ownerDraft.trim() != settings.updates.repositoryOwner ||
+                    enabled = (sourcePreset != OtaSourcePreset.Custom || isValidGithubRepository(ownerDraft)) &&
+                        (sourcePreset != otaSourcePreset(settings.updates.repositoryOwner) ||
+                            ownerDraft.trim() != settings.updates.repositoryOwner ||
                             tagDraft.trim() != settings.updates.releaseTag),
                 ) {
                     Text("Save release source")
