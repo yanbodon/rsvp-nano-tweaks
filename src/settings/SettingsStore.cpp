@@ -11,6 +11,7 @@
 #include "settings/SettingsRules.h"
 #include "storage/fs/StoragePaths.h"
 #include "text/LocaleTag.h"
+#include "update/ReleaseParser.h"
 
 namespace settings {
     namespace {
@@ -173,6 +174,7 @@ namespace settings {
         }
 
         sanitize(settings_);
+        releaseparser::migrateTweaksReleaseSettings(settings_.updates);
 
         if (nvsSecrets)
             secrets_ = std::move(*nvsSecrets);

@@ -7,6 +7,54 @@
 #include "text/AsciiText.h"
 
 namespace releaseparser {
+    namespace {
+        bool isDefaultSource(std::string_view owner) {
+            owner = AsciiText::trim(owner);
+            return owner.empty() || owner == settings::kDefaultRepositoryOwner
+                || owner == std::string{settings::kDefaultRepositoryOwner} + "/" +
+                                std::string{settings::kDefaultRepositoryName};
+        }
+
+        bool isLegacyTweaksPin(std::string_view tag) {
+            tag = AsciiText::trim(tag);
+            return tag == "v0.1.1-tweaks.1"
+                || tag == std::string{settings::kDefaultRepositoryOwner} + "/" +
+                              std::string{settings::kDefaultRepositoryName} + "@v0.1.1-tweaks.1"
+                || tag == std::string{settings::kDefaultRepositoryName} + "@v0.1.1-tweaks.1";
+        }
+    } // namespace
+
+    ReleaseSource sourceForSettings(const settings::UpdateSettings& settings) {
+        ReleaseSource source{settings.repositoryOwner.empty() ? std::string{settings::kDefaultRepositoryOwner}
+                                                              : std::string{AsciiText::trim(settings.repositoryOwner)},
+                             std::string{settings::kDefaultRepositoryName},
+                             std::string{AsciiText::trim(settings.releaseTag)}};
+        splitOwnerRepo(source.owner, source.owner, source.repo);
+        splitOwnerRepo(source.repo, source.owner, source.repo);
+        const size_t at = source.tag.find('@');
+        if (at > 0 && at + 1 < source.tag.length()) {
+            std::string repoPart{AsciiText::trim(std::string_view{source.tag}.substr(0, at))};
+            source.tag = std::string{AsciiText::trim(std::string_view{source.tag}.substr(at + 1))};
+            if (!splitOwnerRepo(repoPart, source.owner, source.repo) && !repoPart.empty())
+                source.repo = repoPart;
+        }
+        return source;
+    }
+
+    std::string assetUrlForSource(const ReleaseSource& source, std::string_view assetName) {
+        std::string url = "https://github.com/" + source.owner + "/" + source.repo + "/releases/";
+        if (source.tag.empty()) return url + "latest/download/" + std::string{assetName};
+        return url + "download/" + source.tag + "/" + std::string{assetName};
+    }
+
+    bool migrateTweaksReleaseSettings(settings::UpdateSettings& settings) {
+        if (!isDefaultSource(settings.repositoryOwner)) return false;
+        if (!settings.releaseTag.empty() && !isLegacyTweaksPin(settings.releaseTag)) return false;
+        settings.repositoryOwner.clear();
+        settings.releaseTag.clear();
+        return true;
+    }
+
     bool splitOwnerRepo(std::string_view value, std::string& owner, std::string& repo) {
         const std::string_view trimmed = AsciiText::trim(value);
         const size_t slash = trimmed.find('/');

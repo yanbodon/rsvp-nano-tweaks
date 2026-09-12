@@ -13,7 +13,9 @@
 namespace settings {
 
     inline constexpr std::string_view kMathFontTarget = "math";
-    inline constexpr std::string_view kDefaultRepositoryOwner = "ionutdecebal";
+    // Empty OTA settings intentionally track the latest release from this fork.
+    inline constexpr std::string_view kDefaultRepositoryOwner = "yanbodon";
+    inline constexpr std::string_view kDefaultRepositoryName = "rsvp-nano-tweaks";
 
     enum class ReadingMode : uint8_t {
         rsvp,

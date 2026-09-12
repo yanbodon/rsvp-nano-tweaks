@@ -494,3 +494,26 @@ data class FirmwareUpdate(
     val currentVersion: String,
     val availableVersion: String,
 )
+
+enum class OtaSourcePreset(val label: String) {
+    MyTweaks("My tweaks"), Official("Official RSVP Nano"), Custom("Custom GitHub repository"),
+}
+
+private const val TWEAKS_REPOSITORY = "yanbodon/rsvp-nano-tweaks"
+private const val OFFICIAL_REPOSITORY = "ionutdecebal/rsvpnano"
+private val GITHUB_REPOSITORY = Regex("^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37})/[A-Za-z0-9._-]+$")
+
+fun otaSourcePreset(owner: String): OtaSourcePreset = when (owner.trim()) {
+    "", TWEAKS_REPOSITORY, "yanbodon" -> OtaSourcePreset.MyTweaks
+    OFFICIAL_REPOSITORY -> OtaSourcePreset.Official
+    else -> OtaSourcePreset.Custom
+}
+
+fun isValidGithubRepository(value: String): Boolean = GITHUB_REPOSITORY.matches(value.trim())
+
+fun NanoSettings.withOtaSource(preset: OtaSourcePreset, customRepository: String = ""): NanoSettings =
+    copy(updates = updates.copy(repositoryOwner = when (preset) {
+        OtaSourcePreset.MyTweaks -> ""
+        OtaSourcePreset.Official -> OFFICIAL_REPOSITORY
+        OtaSourcePreset.Custom -> customRepository.trim()
+    }, releaseTag = ""))
